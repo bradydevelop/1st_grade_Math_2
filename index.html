@@ -2,213 +2,449 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>豪華車標版：超級車手算術大冒險</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>大型街機版：超級車手算術大冒險</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入科幻/街機風格字體 -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background-color: #050505;
+            overflow: hidden; /* 防止平板上下滑動 */
+            touch-action: none;
+        }
+
+        /* 復古街機霓虹網格背景 */
+        .arcade-grid-bg {
+            background-color: #09090b;
+            background-image: 
+                linear-gradient(rgba(56, 189, 248, 0.1) 2px, transparent 2px),
+                linear-gradient(90deg, rgba(56, 189, 248, 0.1) 2px, transparent 2px);
+            background-size: 40px 40px;
+            background-position: center center;
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.9);
+        }
+
+        /* 螢幕掃描線效果 */
+        .scanlines::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 50;
+            background-size: 100% 4px, 6px 100%;
+            pointer-events: none;
+        }
+
+        /* 霓虹文字發光 */
+        .neon-text-blue { text-shadow: 0 0 10px #38bdf8, 0 0 20px #38bdf8; }
+        .neon-text-red { text-shadow: 0 0 10px #f87171, 0 0 20px #f87171; }
+        .neon-text-yellow { text-shadow: 0 0 10px #facc15, 0 0 30px #eab308; }
+
+        /* 街機立體按鈕 */
+        .arcade-btn {
+            background: linear-gradient(to bottom, #1e293b, #0f172a);
+            border: 3px solid #334155;
+            box-shadow: 
+                0 8px 0 #020617, 
+                0 15px 20px rgba(0,0,0,0.4), 
+                inset 0 2px 0 rgba(255,255,255,0.2);
+            transition: all 0.1s;
+            position: relative;
+        }
+        .arcade-btn:active, .arcade-btn.pressed {
+            transform: translateY(8px);
+            box-shadow: 
+                0 0 0 #020617, 
+                0 5px 10px rgba(0,0,0,0.4), 
+                inset 0 2px 0 rgba(255,255,255,0.1);
+            border-color: #38bdf8;
+            background: linear-gradient(to bottom, #0f172a, #020617);
+        }
+        
+        .arcade-btn-green {
+            border-color: #22c55e;
+            color: #22c55e;
+            text-shadow: 0 0 10px #22c55e;
+            box-shadow: 0 8px 0 #14532d, 0 15px 20px rgba(34,197,94,0.2), inset 0 2px 0 rgba(255,255,255,0.2);
+        }
+        .arcade-btn-red {
+            border-color: #ef4444;
+            color: #ef4444;
+            text-shadow: 0 0 10px #ef4444;
+            box-shadow: 0 8px 0 #7f1d1d, 0 15px 20px rgba(239,68,68,0.2), inset 0 2px 0 rgba(255,255,255,0.2);
+        }
+
+        /* 跑動動畫過渡 - 街機高速感 */
+        .car-moving {
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 100;
+            filter: drop-shadow(0 0 20px rgba(255,255,255,0.5));
+        }
+
+        @keyframes pulse-border {
+            0% { border-color: rgba(56, 189, 248, 0.4); }
+            50% { border-color: rgba(56, 189, 248, 1); box-shadow: 0 0 20px rgba(56, 189, 248, 0.6); }
+            100% { border-color: rgba(56, 189, 248, 0.4); }
+        }
+        .neon-box { animation: pulse-border 2s infinite; }
+
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
         }
-        .animate-shake {
-            animation: shake 0.2s ease-in-out 5;
+        .animate-shake { animation: shake 0.2s ease-in-out 3; }
+
+        @keyframes countJump {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.6); color: #fff; text-shadow: 0 0 30px #fff; }
         }
-        .car-container svg {
-            transition: transform 0.3s ease;
+        .animate-count { animation: countJump 0.3s ease-out; }
+        
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            70% { transform: scale(1.3); opacity: 1; filter: brightness(2); }
+            100% { transform: scale(1); opacity: 1; filter: brightness(1); }
         }
-        .car-container svg:hover {
-            transform: scale(1.1);
-        }
+        .pop-in { animation: popIn 0.4s ease-out forwards; }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4 font-sans">
+<body class="flex items-center justify-center min-h-screen p-4 sm:p-6 lg:p-8">
 
-    <div id="game-container" class="max-w-md w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden border-8 border-slate-800">
-        <!-- 內容會由 JavaScript 動態插入 -->
+    <!-- 限制最大寬度為平板尺寸，採用 16:9 / 4:3 比例的螢幕感 -->
+    <div id="game-container" class="relative w-full max-w-6xl aspect-[4/3] sm:aspect-[16/10] bg-slate-900 rounded-[2rem] border-[16px] border-slate-800 shadow-[0_0_50px_rgba(56,189,248,0.3)] overflow-hidden arcade-grid-bg scanlines flex flex-col">
+        <!-- 內容由 JS 動態生成 -->
     </div>
 
     <script>
-        // 遊戲狀態
         let state = {
-            gameState: 'start', // 'start', 'playing', 'finished'
+            gameState: 'start',
             level: 1,
             totalLevels: 5,
-            problem: { a: 0, b: 0, vehicle: null },
+            problem: { a: 0, b: 0, vehicle: null, colorA: "#0ea5e9", colorB: "#f43f5e" },
             userAnswer: null,
-            showFeedback: null // 'correct', 'wrong', null
+            showFeedback: null,
+            visibleA: 0,
+            visibleB: 0,
+            summingA: 0, 
+            summingB: 0, 
+            isAnimating: false,
+            isSumming: false
         };
 
         const vehicleModels = [
-            { brand: "Star", label: "星芒豪華轎車", color: "#64748b" },
-            { brand: "Roundel", label: "藍白運動跑車", color: "#1e40af" },
-            { brand: "Shield", label: "金盾超級跑車", color: "#b91c1c" },
-            { brand: "Electric", label: "閃電電動車", color: "#475569" }
+            { brand: "Star", label: "STAR CRUISER" },
+            { brand: "Roundel", label: "GT RACER" },
+            { brand: "Shield", label: "SHIELD PRO" },
+            { brand: "Electric", label: "VOLT X" }
         ];
 
-        // 生成車子 SVG
-        function getCarSvg(brand, color, size = 80) {
-            const brandLogos = {
-                "Star": `
-                    <g transform="translate(45, 25) scale(0.15)">
-                        <circle cx="50" cy="50" r="45" fill="none" stroke="silver" stroke-width="5" />
-                        <path d="M50 10 L60 45 L90 50 L60 55 L50 90 L40 55 L10 50 L40 45 Z" fill="silver" />
-                    </g>`,
-                "Roundel": `
-                    <g transform="translate(45, 25) scale(0.18)">
-                        <circle cx="50" cy="50" r="40" fill="black" />
-                        <path d="M50 10 A40 40 0 0 1 90 50 L50 50 Z" fill="#0066b3" />
-                        <path d="M10 50 A40 40 0 0 1 50 10 L50 50 Z" fill="white" />
-                        <path d="M50 90 A40 40 0 0 1 10 50 L50 50 Z" fill="#0066b3" />
-                        <path d="M90 50 A40 40 0 0 1 50 90 L50 50 Z" fill="white" />
-                        <circle cx="50" cy="50" r="42" fill="none" stroke="silver" stroke-width="2" />
-                    </g>`,
-                "Shield": `
-                    <g transform="translate(45, 24) scale(0.15)">
-                        <path d="M20 10 L80 10 L75 80 L50 95 L25 80 Z" fill="#ffd700" stroke="#000" stroke-width="2" />
-                        <text x="50" y="60" font-size="40" text-anchor="middle" fill="black" font-weight="bold">S</text>
-                    </g>`,
-                "Electric": `
-                    <g transform="translate(45, 25) scale(0.15)">
-                        <path d="M10 20 Q50 10 90 20 L50 90 Z" fill="#cc0000" />
-                        <path d="M10 15 Q50 5 90 15" fill="none" stroke="#cc0000" stroke-width="5" />
-                    </g>`
-            };
-
+        // 高科技儀表板 Logo
+        function getBrandLogoSvg() {
             return `
-                <svg width="${size}" height="${size * 0.6}" viewBox="0 0 120 70" class="drop-shadow-md">
-                    <ellipse cx="60" cy="65" rx="50" ry="5" fill="black" fill-opacity="0.1" />
-                    <path d="M10 55 Q5 55 5 50 L5 35 Q5 25 20 20 L40 10 Q55 5 75 10 L100 20 Q115 25 115 35 L115 50 Q115 55 110 55 Z" fill="${color}" />
-                    <path d="M25 24 L42 14 Q55 10 73 14 L95 24 Z" fill="#e2e8f0" fill-opacity="0.6" />
-                    <path d="M60 12 L60 24" stroke="${color}" stroke-width="2" stroke-opacity="0.5" />
-                    <circle cx="30" cy="55" r="10" fill="#333" />
-                    <circle cx="30" cy="55" r="6" fill="#999" />
-                    <circle cx="90" cy="55" r="10" fill="#333" />
-                    <circle cx="90" cy="55" r="6" fill="#999" />
-                    <path d="M110 35 Q115 35 115 42 L110 45 Z" fill="#ffeda0" />
-                    <path d="M5 35 Q0 35 0 42 L5 45 Z" fill="#fc8181" />
-                    ${brandLogos[brand]}
+            <div class="flex flex-col items-center">
+                <svg width="160" height="120" viewBox="0 0 100 80" class="drop-shadow-[0_0_15px_rgba(250,204,21,0.8)]">
+                    <polygon points="10,40 50,10 90,40 70,70 30,70" fill="#1e293b" stroke="#facc15" stroke-width="4"/>
+                    <polygon points="20,40 50,18 80,40 65,65 35,65" fill="#020617"/>
+                    <text x="50" y="55" font-family="Orbitron" font-size="28" fill="#facc15" text-anchor="middle" font-weight="900" class="neon-text-yellow">SCM</text>
+                    <path d="M10 40 L90 40" stroke="#facc15" stroke-width="2" opacity="0.5"/>
+                </svg>
+                <h1 class="text-5xl md:text-6xl font-black italic mt-2 text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-500 to-yellow-600 tracking-widest drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]">SUPER CAR MATH</h1>
+                <p class="text-sky-400 font-bold uppercase tracking-[0.5em] text-lg mt-2 neon-text-blue">Arcade Edition</p>
+            </div>`;
+        }
+
+        // 帶有霓虹底燈的車輛 SVG
+        function getCarSvg(brand, color, size = 85, isBlue = true) {
+            const glowColor = isBlue ? "rgba(56, 189, 248, 0.6)" : "rgba(244, 63, 94, 0.6)";
+            
+            return `
+                <svg width="${size}" height="${size * 0.55}" viewBox="0 0 120 70" style="filter: drop-shadow(0 15px 10px ${glowColor});">
+                    <!-- 底盤霓虹燈 -->
+                    <ellipse cx="60" cy="65" rx="55" ry="8" fill="${glowColor}" filter="blur(4px)" />
+                    <!-- 車體 -->
+                    <path d="M10 55 Q5 55 5 50 L5 35 Q5 25 20 20 L40 10 Q55 5 75 10 L100 20 Q115 25 115 35 L115 50 Q115 55 110 55 Z" fill="${color}" stroke="#fff" stroke-width="1" />
+                    <path d="M25 24 L42 14 Q55 10 73 14 L95 24 Z" fill="#0f172a" stroke="#475569" stroke-width="2" />
+                    <!-- 輪框 -->
+                    <circle cx="30" cy="55" r="12" fill="#020617" stroke="#94a3b8" stroke-width="2" />
+                    <circle cx="30" cy="55" r="5" fill="#e2e8f0" />
+                    <circle cx="90" cy="55" r="12" fill="#020617" stroke="#94a3b8" stroke-width="2" />
+                    <circle cx="90" cy="55" r="5" fill="#e2e8f0" />
+                    <!-- 車燈 -->
+                    <rect x="105" y="32" width="10" height="8" rx="2" fill="#fff" filter="drop-shadow(0 0 5px #fff)" />
                 </svg>`;
         }
 
-        // 核心邏輯：更新畫面
         function render() {
             const container = document.getElementById('game-container');
             
             if (state.gameState === 'start') {
                 container.innerHTML = `
-                    <div class="bg-slate-800 p-6 text-white text-center">
-                        <h1 class="text-2xl font-black italic">SUPER CAR MATH</h1>
-                    </div>
-                    <div class="p-8 text-center bg-gradient-to-b from-white to-slate-50">
-                        <div class="mb-10 flex justify-center">
-                            ${getCarSvg("Shield", "#b91c1c", 160)}
+                    <div class="flex-1 flex flex-col items-center justify-center p-8 z-10 relative">
+                        <div class="mb-12 transform hover:scale-105 transition-transform duration-500">
+                            ${getBrandLogoSvg()}
                         </div>
-                        <h2 class="text-2xl font-bold text-slate-800 mb-8">歡迎來到豪華車展！</h2>
-                        <button onclick="startGame()" class="bg-slate-800 hover:bg-black text-white font-bold py-5 px-12 rounded-2xl text-xl shadow-xl transition-all active:scale-95">
-                            開始展示會
-                        </button>
-                    </div>`;
-            } else if (state.gameState === 'playing') {
-                const progressWidth = (state.level / state.totalLevels) * 100;
-                
-                container.innerHTML = `
-                    <div class="bg-slate-800 p-6 text-white text-center">
-                        <div class="flex justify-between items-center mb-4">
-                            <div class="bg-slate-700 px-3 py-1 rounded-full text-xs font-mono">LEVEL: ${state.level}/${state.totalLevels}</div>
-                            <div class="flex gap-1">
-                                ${Array.from({length: state.totalLevels}).map((_, i) => 
-                                    `<div class="w-3 h-3 rounded-full ${i < state.level ? 'bg-green-400' : 'bg-slate-600'}"></div>`
-                                ).join('')}
-                            </div>
-                        </div>
-                        <h1 class="text-xl font-black italic tracking-wider">超級車手算術中...</h1>
-                    </div>
-                    
-                    <div class="p-6 space-y-6">
-                        <!-- 展示區 A -->
-                        <div class="text-center">
-                            <div class="inline-block bg-slate-200 px-4 py-1 rounded-full text-[10px] font-bold text-slate-600 mb-2 uppercase tracking-widest">
-                                Zone A: ${state.problem.vehicle.label}
-                            </div>
-                            <div class="flex flex-wrap justify-center gap-2 p-3 bg-white rounded-3xl shadow-inner min-h-[120px] items-center border border-slate-100 car-container">
-                                ${Array.from({length: state.problem.a}).map(() => getCarSvg(state.problem.vehicle.brand, state.problem.vehicle.color, 70)).join('')}
-                            </div>
-                        </div>
-
-                        <!-- 加號 -->
-                        <div class="flex justify-center">
-                            <div class="bg-slate-800 text-white rounded-full p-2 shadow-lg">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                            </div>
-                        </div>
-
-                        <!-- 展示區 B -->
-                        <div class="text-center">
-                            <div class="inline-block bg-slate-200 px-4 py-1 rounded-full text-[10px] font-bold text-slate-600 mb-2 uppercase tracking-widest">
-                                Zone B: 追加展示車
-                            </div>
-                            <div class="flex flex-wrap justify-center gap-2 p-3 bg-white rounded-3xl shadow-inner min-h-[120px] items-center border border-slate-100 car-container">
-                                ${Array.from({length: state.problem.b}).map(() => getCarSvg(state.problem.vehicle.brand, state.problem.vehicle.color, 70)).join('')}
-                            </div>
-                        </div>
-
-                        <!-- 回饋訊息 -->
-                        <div id="feedback-area" class="h-8 text-center font-black text-lg">
-                            ${state.showFeedback === 'correct' ? '<span class="text-green-600 animate-bounce block">✨ 完美的展示！</span>' : ''}
-                            ${state.showFeedback === 'wrong' ? '<span class="text-red-500 animate-shake block">❌ 檢查一下引擎（再數一次）！</span>' : ''}
-                        </div>
-
-                        <!-- 答案區 -->
-                        <div class="bg-slate-800 p-5 rounded-[2rem] shadow-inner">
-                            <div class="text-center text-white mb-4 font-bold">展場總共有幾台車？</div>
-                            <div class="grid grid-cols-5 gap-2">
-                                ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => `
-                                    <button onclick="handleAnswer(${num})" class="aspect-square rounded-xl text-lg font-black transition-all shadow-md ${state.userAnswer === num ? (num === state.problem.a + state.problem.b ? 'bg-green-500 text-white' : 'bg-red-500 text-white') : 'bg-white text-slate-800 hover:bg-slate-100'}">
-                                        ${num}
+                        
+                        <div class="bg-slate-900/80 p-8 rounded-[2rem] border-4 border-sky-900 shadow-[0_0_30px_rgba(0,0,0,0.8)] mb-12 backdrop-blur-sm">
+                            <h2 class="text-sky-400 font-bold text-2xl mb-6 uppercase tracking-widest text-center neon-text-blue">SELECT STAGES</h2>
+                            <div class="flex gap-6 justify-center">
+                                ${[3, 5, 10].map(n => `
+                                    <button onclick="setTotalLevels(${n})" class="arcade-btn w-20 h-20 rounded-xl flex items-center justify-center font-black text-3xl transition-all ${state.totalLevels === n ? 'border-sky-400 text-sky-400 shadow-[0_0_20px_rgba(56,189,248,0.5)] transform translate-y-[4px]' : 'text-slate-400 border-slate-700 hover:text-white hover:border-slate-500'}">
+                                        ${n}
                                     </button>
                                 `).join('')}
                             </div>
                         </div>
-                    </div>`;
-            } else if (state.gameState === 'finished') {
-                container.innerHTML = `
-                    <div class="bg-slate-800 p-6 text-white text-center">
-                        <h1 class="text-2xl font-black italic">MISSION COMPLETE</h1>
-                    </div>
-                    <div class="p-10 text-center bg-gradient-to-b from-white to-slate-50">
-                        <div class="bg-yellow-400 p-8 rounded-full inline-block mb-6 shadow-xl border-4 border-white text-white text-6xl">
-                            🏆
-                        </div>
-                        <h2 class="text-3xl font-black text-slate-800 mb-2">傳奇收藏家！</h2>
-                        <p class="text-slate-600 mb-8 font-medium">你成功辨識了所有豪華車輛</p>
-                        
-                        <button onclick="startGame()" class="flex items-center justify-center gap-2 mx-auto bg-slate-800 hover:bg-black text-white font-bold py-5 px-12 rounded-2xl text-xl shadow-xl transition-all active:scale-95">
-                            再次巡視
+
+                        <button onclick="startGame()" class="arcade-btn bg-yellow-500 text-slate-900 border-yellow-300 font-black py-6 px-32 rounded-full text-4xl hover:bg-yellow-400 tracking-[0.2em] shadow-[0_0_40px_rgba(250,204,21,0.4)]">
+                            INSERT COIN / START
                         </button>
                     </div>`;
+                return;
             }
+
+            if (state.gameState === 'finished') {
+                container.innerHTML = `
+                <div class="flex-1 flex flex-col items-center justify-center p-8 z-10 relative bg-black/50 backdrop-blur-md">
+                    <div class="text-9xl mb-10 drop-shadow-[0_0_30px_rgba(250,204,21,0.8)]">🏆</div>
+                    <h2 class="text-6xl font-black text-yellow-400 mb-6 neon-text-yellow tracking-widest">STAGE CLEAR!</h2>
+                    <p class="text-sky-400 text-3xl mb-16 uppercase tracking-[0.3em] font-bold">TOTAL SCORE: ${state.totalLevels * 1000}</p>
+                    <button onclick="state.gameState = 'start'; render();" class="arcade-btn border-sky-400 text-sky-400 py-6 px-24 rounded-full font-black text-3xl hover:bg-sky-900/50 transition-all">
+                        RETURN TO MENU
+                    </button>
+                </div>`;
+                return;
+            }
+
+            const currentTotal = state.summingA + state.summingB;
+
+            // 遊戲主畫面 - 雙欄平板最佳化佈局
+            container.innerHTML = `
+                <!-- 頂部 HUD -->
+                <div class="h-16 bg-slate-900/90 border-b-2 border-sky-500 flex justify-between items-center px-8 z-10 shadow-[0_5px_20px_rgba(0,0,0,0.5)]">
+                    <div class="flex items-center gap-4">
+                        <span class="font-black text-2xl text-yellow-400 uppercase tracking-widest neon-text-yellow">STAGE ${state.level.toString().padStart(2, '0')}</span>
+                    </div>
+                    <div class="flex gap-2">
+                        ${Array.from({length: state.totalLevels}).map((_, i) => `<div class="w-8 h-3 rounded-full ${i < state.level ? 'bg-sky-400 shadow-[0_0_10px_#38bdf8]' : 'bg-slate-800'} border border-slate-700"></div>`).join('')}
+                    </div>
+                </div>
+                
+                <!-- 遊戲主區塊 (左右雙欄) -->
+                <div class="flex-1 flex flex-row p-6 gap-6 z-10">
+                    
+                    <!-- 左欄：出發區 (Zone A & B) -->
+                    <div class="w-[55%] flex flex-col gap-6 justify-center">
+                        
+                        <!-- 藍隊伍 -->
+                        <div id="zone-a" class="relative bg-slate-800/60 p-6 rounded-3xl border-2 border-sky-900 neon-box flex-1 flex flex-col justify-center min-h-[160px]">
+                            <div class="absolute -top-4 left-6 bg-slate-900 text-sky-400 text-sm px-4 py-1 rounded-full font-bold uppercase tracking-widest border border-sky-500 shadow-[0_0_10px_#38bdf8]">TEAM BLUE</div>
+                            <div class="flex flex-wrap justify-start gap-4">
+                                ${Array.from({length: state.problem.a}).map((_, i) => `
+                                    <div id="car-a-${i}" class="relative ${i < state.visibleA ? 'pop-in' : 'opacity-0'} ${i < state.summingA ? 'invisible' : ''}">
+                                        ${getCarSvg(state.problem.vehicle.brand, state.problem.colorA, 100, true)}
+                                        <div class="absolute -top-2 -right-2 bg-sky-500 text-slate-900 text-sm w-8 h-8 rounded-full flex items-center justify-center font-black border-2 border-slate-900">${i + 1}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- 裝飾性加號 -->
+                        <div class="flex justify-center -my-3 z-20">
+                            <div class="bg-slate-900 text-yellow-400 rounded-full p-2 border-2 border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.5)]">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            </div>
+                        </div>
+
+                        <!-- 紅隊伍 -->
+                        <div id="zone-b" class="relative bg-slate-800/60 p-6 rounded-3xl border-2 border-rose-900 flex-1 flex flex-col justify-center min-h-[160px] ${state.visibleA === state.problem.a ? 'border-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.3)]' : 'opacity-40'} transition-all">
+                            <div class="absolute -top-4 left-6 bg-slate-900 text-rose-400 text-sm px-4 py-1 rounded-full font-bold uppercase tracking-widest border border-rose-500 shadow-[0_0_10px_#f43f5e]">TEAM RED</div>
+                            <div class="flex flex-wrap justify-start gap-4">
+                                ${Array.from({length: state.problem.b}).map((_, i) => `
+                                    <div id="car-b-${i}" class="relative ${i < state.visibleB ? 'pop-in' : 'opacity-0'} ${i < state.summingB ? 'invisible' : ''}">
+                                        ${getCarSvg(state.problem.vehicle.brand, state.problem.colorB, 100, false)}
+                                        <div class="absolute -top-2 -right-2 bg-rose-500 text-slate-900 text-sm w-8 h-8 rounded-full flex items-center justify-center font-black border-2 border-slate-900">${i + 1}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <!-- 動畫觸發按鈕 -->
+                        <div class="mt-2 h-20">
+                            ${!state.isAnimating && !state.isSumming && currentTotal === 0 ? `
+                                <button onclick="runSummingAnimation()" class="arcade-btn w-full h-full border-yellow-400 text-yellow-400 font-black rounded-2xl text-2xl tracking-widest hover:bg-yellow-900/30 flex items-center justify-center gap-4">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                    WATCH RACE
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    <!-- 右欄：終點與答題區 -->
+                    <div class="w-[45%] flex flex-col gap-6">
+                        
+                        <!-- 終點車庫 -->
+                        <div id="zone-total" class="relative bg-slate-900/80 p-6 rounded-3xl border-4 border-slate-700 flex-1 flex flex-col shadow-[inset_0_0_50px_rgba(0,0,0,0.8)]">
+                            <div class="absolute top-0 inset-x-0 h-8 bg-slate-800 border-b-2 border-slate-600 flex justify-around items-center px-4 rounded-t-2xl">
+                                ${Array.from({length: 8}).map(() => `<div class="w-4 h-4 rounded-full ${currentTotal > 0 ? 'bg-yellow-400 shadow-[0_0_10px_#facc15]' : 'bg-slate-700'}"></div>`).join('')}
+                            </div>
+                            
+                            <div class="mt-6 flex-1 flex flex-wrap content-start justify-center gap-2">
+                                ${Array.from({length: state.summingA}).map(() => `<div class="pop-in">${getCarSvg(state.problem.vehicle.brand, state.problem.colorA, 80, true)}</div>`).join('')}
+                                ${Array.from({length: state.summingB}).map(() => `<div class="pop-in">${getCarSvg(state.problem.vehicle.brand, state.problem.colorB, 80, false)}</div>`).join('')}
+                            </div>
+                            
+                            <!-- 大型計數器 -->
+                            <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-slate-900 rounded-3xl border-4 border-sky-500 flex items-center justify-center shadow-[0_0_30px_rgba(56,189,248,0.5)] z-20 ${state.isSumming ? 'animate-count' : ''}">
+                                <span class="text-6xl font-black text-sky-400 neon-text-blue">${currentTotal}</span>
+                            </div>
+                        </div>
+
+                        <!-- 回饋文字 -->
+                        <div id="feedback-area" class="h-12 flex items-center justify-center text-3xl font-black tracking-widest uppercase">
+                            ${state.showFeedback === 'correct' ? '<span class="text-green-400 neon-text-green animate-pulse">PERFECT! +1000</span>' : ''}
+                            ${state.showFeedback === 'wrong' ? '<span class="text-rose-500 neon-text-red animate-shake">MISS! TRY AGAIN</span>' : ''}
+                        </div>
+
+                        <!-- 大型數字按鍵盤 -->
+                        <div class="bg-slate-800/80 p-6 rounded-3xl border-2 border-slate-600 shadow-2xl ${state.isAnimating || state.isSumming ? 'opacity-50 pointer-events-none' : ''}">
+                            <div class="grid grid-cols-5 gap-3 md:gap-4">
+                                ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => {
+                                    let btnClass = "text-slate-300 border-slate-500 hover:border-sky-400 hover:text-sky-400";
+                                    if (state.userAnswer === num) {
+                                        btnClass = num === state.problem.a + state.problem.b ? "arcade-btn-green scale-110 z-10" : "arcade-btn-red";
+                                    }
+                                    return `
+                                    <button onclick="handleAnswer(${num})" class="arcade-btn aspect-square rounded-2xl text-3xl md:text-4xl font-black transition-all flex items-center justify-center ${btnClass}">
+                                        ${num}
+                                    </button>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
         }
 
-        // 遊戲操作函數
-        function startGame() {
-            state.level = 1;
-            state.gameState = 'playing';
-            generateProblem();
-        }
-
-        function generateProblem() {
-            const a = Math.floor(Math.random() * 5) + 1;
-            const b = Math.floor(Math.random() * 4) + 1;
-            const modelIndex = Math.floor(Math.random() * vehicleModels.length);
-            state.problem = { a, b, vehicle: vehicleModels[modelIndex] };
-            state.userAnswer = null;
-            state.showFeedback = null;
+        function setTotalLevels(n) {
+            state.totalLevels = n;
             render();
         }
 
+        async function startGame() {
+            state.level = 1;
+            state.gameState = 'playing';
+            await generateProblem();
+        }
+
+        async function generateProblem() {
+            const a = Math.floor(Math.random() * 5) + 1;
+            const b = Math.floor(Math.random() * 5) + 1;
+            state.problem = { 
+                a, b, 
+                vehicle: vehicleModels[Math.floor(Math.random() * vehicleModels.length)],
+                colorA: "#0ea5e9", // Sky Blue
+                colorB: "#f43f5e"  // Rose Red
+            };
+            state.userAnswer = null;
+            state.showFeedback = null;
+            state.visibleA = 0;
+            state.visibleB = 0;
+            state.summingA = 0;
+            state.summingB = 0;
+            state.isSumming = false;
+            state.isAnimating = true;
+            
+            render();
+            
+            // 快速進場動畫
+            for (let i = 1; i <= state.problem.a; i++) {
+                await new Promise(r => setTimeout(r, 200));
+                state.visibleA = i;
+                render();
+            }
+            await new Promise(r => setTimeout(r, 300));
+            for (let i = 1; i <= state.problem.b; i++) {
+                await new Promise(r => setTimeout(r, 200));
+                state.visibleB = i;
+                render();
+            }
+            state.isAnimating = false;
+            render();
+        }
+
+        // 修改為雙欄橫向直線匯入動畫
+        async function runSummingAnimation() {
+            if (state.isSumming) return;
+            state.isSumming = true;
+            state.showFeedback = null;
+            render();
+
+            const totalZone = document.getElementById('zone-total');
+            const totalRect = totalZone.getBoundingClientRect();
+
+            // 處理左欄 A 區
+            for (let i = 0; i < state.problem.a; i++) {
+                const carEl = document.getElementById(`car-a-${i}`);
+                if (carEl) {
+                    await animateDashRight(carEl, totalRect);
+                    state.summingA = i + 1;
+                    render();
+                }
+            }
+
+            await new Promise(r => setTimeout(r, 300));
+
+            // 處理左欄 B 區
+            for (let i = 0; i < state.problem.b; i++) {
+                const carEl = document.getElementById(`car-b-${i}`);
+                if (carEl) {
+                    await animateDashRight(carEl, totalRect);
+                    state.summingB = i + 1;
+                    render();
+                }
+            }
+
+            state.isSumming = false;
+            render();
+        }
+
+        // 直線衝刺動畫 (由左向右進入車庫)
+        async function animateDashRight(element, targetRect) {
+            const startRect = element.getBoundingClientRect();
+            
+            const dummy = element.cloneNode(true);
+            dummy.style.position = 'fixed';
+            dummy.style.left = startRect.left + 'px';
+            dummy.style.top = startRect.top + 'px';
+            dummy.style.width = startRect.width + 'px';
+            dummy.style.margin = '0';
+            dummy.style.zIndex = '1000';
+            dummy.style.pointerEvents = 'none';
+            dummy.classList.add('car-moving');
+            document.body.appendChild(dummy);
+
+            element.style.visibility = 'hidden';
+            dummy.offsetHeight; // force reflow
+
+            // 直接飛向右側終點區的隨機/中心位置
+            const targetX = targetRect.left + (targetRect.width * 0.2) + Math.random() * (targetRect.width * 0.4);
+            const targetY = targetRect.top + (targetRect.height * 0.2) + Math.random() * (targetRect.height * 0.4);
+
+            dummy.style.left = targetX + 'px';
+            dummy.style.top = targetY + 'px';
+            dummy.style.transform = 'scale(0.8) rotate(5deg)'; // 帶點煞車感
+            dummy.style.opacity = '0'; // 衝入後消失
+
+            await new Promise(r => setTimeout(r, 600)); // 配合 0.8s CSS transition，提早一點結束
+            document.body.removeChild(dummy);
+        }
+
         function handleAnswer(num) {
-            if (state.showFeedback) return;
+            if (state.isAnimating || state.isSumming) return;
             state.userAnswer = num;
             
             if (num === state.problem.a + state.problem.b) {
@@ -230,11 +466,10 @@
                     state.showFeedback = null;
                     state.userAnswer = null;
                     render();
-                }, 1200);
+                }, 1000);
             }
         }
 
-        // 初始渲染
         window.onload = render;
     </script>
 </body>
